@@ -164,19 +164,19 @@ class CFGA:
 
         result = []
         for i in range(len(self.nodeset)):
-            if self.OUT[i] and i in visited:
+            if self.OUT[self.nodeset[i]] and self.nodeset[i] in visited:
                 result.append(self.nodeset[i])
         t2 = time.time()-t1
         return result, t2
 
-    def def_ptfa_efficient_reachable(self, cfg: CFG, pattern_set=["Pattern"]):
+    def def_ptfa_efficient_reachable(self, cfg: CFG, pattern_set):
         t1 = time.time()
         self.reset()
         # init
         self.cfg = cfg
         nodeid = self.cfg.get_node_ids()
-        self.IN = [True] * len(nodeid)
-        self.OUT = [True] * len(nodeid)
+        self.IN = [True] * (len(nodeid)+nodeid[0])
+        self.OUT = [True] * (len(nodeid)+nodeid[0])
         self.nodeset = nodeid
         visited = []
         worklist = []
@@ -191,10 +191,13 @@ class CFGA:
         worklist.extend(exits)
         # loop
         while len(worklist) > 0:
+
             node = worklist.pop(0)
-            self.IN[node] = (self.cfg.get_type(
-                node) in pattern_set) or self.OUT[node]
+            self.IN[node] = (
+                node in pattern_set) or self.OUT[node]
+
             for parent in self.cfg.get_any_parents(node):
+
                 propagate_flag = (
                     (self.IN[node] < self.OUT[parent]) or (not parent in visited))
                 if propagate_flag:
@@ -202,10 +205,13 @@ class CFGA:
                     visited.append(parent)
                     worklist.append(parent)
 
+        print(self.IN[58], " ", self.OUT[58])
+
         result = []
 
         for i in range(len(self.nodeset)):
-            if self.IN[i] and i in visited:
+
+            if self.IN[self.nodeset[i]] and self.nodeset[i] in visited:
                 result.append(self.nodeset[i])
         t2 = time.time()-t1
         return result, t2
@@ -218,4 +224,22 @@ if __name__ == '__main__':
     cfg = cfgreader.read_cfg("../tp/perf/graph1.cfg.json")
     cfga = CFGA()
     #print(cfga.ptfa_reaching(cfg, CFGA.definit))
-    print(cfga.def_ptfa_efficient_reachable(cfg))
+    print(cfga.def_ptfa_efficient_reachable(cfg, ["Pattern"]))
+
+    # fopenfclose
+    cfg = cfgreader.read_cfg("../tp/part_1/file1.php.cfg.json")
+    cfga = CFGA()
+    nodes = cfg.get_node_ids()
+    fopens = []
+    pattern = []
+    for node in nodes:
+        if cfg.get_image(node) == "fopen":
+            fopens.append(node)
+        if cfg.get_image(node) == "fclose":
+            pattern.append(node)
+
+    reachable = cfga.def_ptfa_efficient_reachable(cfg, pattern)
+
+    for open in fopens:
+        if open not in reachable:
+            print(f"fopen {open} is not reachable by a fclose")
