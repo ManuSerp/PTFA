@@ -263,4 +263,5 @@ if __name__ == '__main__':
 
     for sql in mysql:
         if sql not in reaching:
-            print(f"sql query {sql} is not protected by a has_cap")
+            print(
+                f"sql query {cfg.get_position(sql)} is not protected by a has_cap")
