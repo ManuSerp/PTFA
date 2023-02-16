@@ -22,7 +22,7 @@ class CFGA:
         IN[node] = True
         return IN[node] and OUT[parent]
 
-    def ptfa(self, cfg: CFG, func_comp, pattern_set=["Pattern"]):
+    def ptfa_reaching(self, cfg: CFG, func_comp, pattern_set=["Pattern"]):
         self.reset()
         t1 = time.time()
         # init
@@ -55,7 +55,7 @@ class CFGA:
         t2 = time.time()-t1
         return result, t2
 
-    def poss_ptfa_efficient(self, cfg: CFG, pattern_set=["Pattern"]):
+    def poss_ptfa_efficient_reaching(self, cfg: CFG, pattern_set=["Pattern"]):
         t1 = time.time()
         self.reset()
         # init
@@ -67,7 +67,9 @@ class CFGA:
         visited = []
         worklist = []
         visited.append(self.nodeset[0])
+        visited.extend(self.cfg.get_func_entry_nodes())
         worklist.append(self.nodeset[0])
+        worklist.extend(self.cfg.get_func_entry_nodes())
         # loop
         while len(worklist) > 0:
             node = worklist.pop(0)
@@ -79,9 +81,8 @@ class CFGA:
                     (self.OUT[node] > self.IN[child]) or (not child in visited))
                 if propagate_flag:
                     self.IN[child] = self.OUT[node]
-                    if not child in visited:
-                        visited.append(child)
-                        worklist.append(child)
+                    visited.append(child)
+                    worklist.append(child)
 
         result = []
         for i in range(len(self.nodeset)):
@@ -90,11 +91,51 @@ class CFGA:
         t2 = time.time()-t1
         return result, t2
 
-    def def_ptfa_efficient(self, cfg: CFG, pattern_set=["Pattern"]):
+    def poss_ptfa_efficient_reachable(self, cfg: CFG, pattern_set=["Pattern"]):
         t1 = time.time()
         self.reset()
         # init
         self.cfg = cfg
+        nodeid = self.cfg.get_node_ids()
+        self.IN = [False] * len(nodeid)
+        self.OUT = [False] * len(nodeid)
+        self.nodeset = nodeid
+        visited = []
+        worklist = []
+        exits = []
+        for node in nodeid:
+            if self.cfg.get_type(node) == "Exit":
+                exits.append(node)
+
+        visited.extend(exits)
+        worklist.extend(exits)
+        # loop
+        while len(worklist) > 0:
+            node = worklist.pop(0)
+            self.IN[node] = (self.cfg.get_type(
+                node) in pattern_set) or self.OUT[node]
+            for parent in self.cfg.get_any_parents(node):
+                propagate_flag = (
+                    (self.IN[node] > self.OUT[parent]) or (not parent in visited))
+                if propagate_flag:
+                    self.OUT[parent] = self.IN[node]
+                    visited.append(parent)
+                    worklist.append(parent)
+
+        result = []
+
+        for i in range(len(self.nodeset)):
+            if self.IN[i] and i in visited:
+                result.append(self.nodeset[i])
+        t2 = time.time()-t1
+        return result, t2
+
+    def def_ptfa_efficient_reaching(self, cfg: CFG, pattern_set=["Pattern"]):
+        t1 = time.time()
+        self.reset()
+        # init
+        self.cfg = cfg
+
         nodeid = self.cfg.get_node_ids()
         self.IN = [True] * len(nodeid)
         self.OUT = [True] * len(nodeid)
@@ -103,7 +144,10 @@ class CFGA:
         worklist = []
         self.IN[0] = False
         visited.append(self.nodeset[0])
+        visited.extend(self.cfg.get_func_entry_nodes())
+
         worklist.append(self.nodeset[0])
+        worklist.extend(self.cfg.get_func_entry_nodes())
         # loop
         while len(worklist) > 0:
             node = worklist.pop(0)
@@ -125,6 +169,47 @@ class CFGA:
         t2 = time.time()-t1
         return result, t2
 
+    def def_ptfa_efficient_reachable(self, cfg: CFG, pattern_set=["Pattern"]):
+        t1 = time.time()
+        self.reset()
+        # init
+        self.cfg = cfg
+        nodeid = self.cfg.get_node_ids()
+        self.IN = [True] * len(nodeid)
+        self.OUT = [True] * len(nodeid)
+        self.nodeset = nodeid
+        visited = []
+        worklist = []
+        exits = []
+        for node in nodeid:
+            if self.cfg.get_type(node) == "Exit":
+                exits.append(node)
+
+        for node in exits:
+            self.OUT[node] = False
+        visited.extend(exits)
+        worklist.extend(exits)
+        # loop
+        while len(worklist) > 0:
+            node = worklist.pop(0)
+            self.IN[node] = (self.cfg.get_type(
+                node) in pattern_set) or self.OUT[node]
+            for parent in self.cfg.get_any_parents(node):
+                propagate_flag = (
+                    (self.IN[node] < self.OUT[parent]) or (not parent in visited))
+                if propagate_flag:
+                    self.OUT[parent] = self.IN[node]
+                    visited.append(parent)
+                    worklist.append(parent)
+
+        result = []
+
+        for i in range(len(self.nodeset)):
+            if self.IN[i] and i in visited:
+                result.append(self.nodeset[i])
+        t2 = time.time()-t1
+        return result, t2
+
 
 if __name__ == '__main__':
 
@@ -132,5 +217,5 @@ if __name__ == '__main__':
 
     cfg = cfgreader.read_cfg("../tp/perf/graph1.cfg.json")
     cfga = CFGA()
-    print(cfga.ptfa(cfg, CFGA.definit))
-    print(cfga.def_ptfa_efficient(cfg))
+    #print(cfga.ptfa_reaching(cfg, CFGA.definit))
+    print(cfga.def_ptfa_efficient_reachable(cfg))
