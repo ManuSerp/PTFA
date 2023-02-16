@@ -130,15 +130,15 @@ class CFGA:
         t2 = time.time()-t1
         return result, t2
 
-    def def_ptfa_efficient_reaching(self, cfg: CFG, pattern_set=["Pattern"]):
+    def def_ptfa_efficient_reaching(self, cfg: CFG, pattern_set):
         t1 = time.time()
         self.reset()
         # init
         self.cfg = cfg
 
         nodeid = self.cfg.get_node_ids()
-        self.IN = [True] * len(nodeid)
-        self.OUT = [True] * len(nodeid)
+        self.IN = [True] * (len(nodeid)+nodeid[0])
+        self.OUT = [True] * (len(nodeid)+nodeid[0])
         self.nodeset = nodeid
         visited = []
         worklist = []
@@ -152,8 +152,8 @@ class CFGA:
         while len(worklist) > 0:
             node = worklist.pop(0)
 
-            self.OUT[node] = (self.cfg.get_type(
-                node) in pattern_set) or self.IN[node]
+            self.OUT[node] = (
+                node in pattern_set) or self.IN[node]
             for child in self.cfg.get_any_children(node):
                 propagate_flag = (
                     (self.OUT[node] < self.IN[child]) or (not child in visited))
@@ -243,3 +243,24 @@ if __name__ == '__main__':
     for open in fopens:
         if open not in reachable:
             print(f"fopen {open} is not reachable by a fclose")
+
+
+# mysql
+
+    cfg = cfgreader.read_cfg("../tp/part_2/wp-db.php.cfg.json")
+    cfga = CFGA()
+    nodes = cfg.get_node_ids()
+    mysql = []
+    pattern = []
+    for node in nodes:
+        if cfg.get_image(node) == "mysql_query":
+            mysql.append(node)
+        if cfg.get_image(node) == "has_cap":
+            pattern.append(node)
+
+    print(mysql)
+    reaching = cfga.def_ptfa_efficient_reaching(cfg, pattern)
+
+    for sql in mysql:
+        if sql not in reaching:
+            print(f"sql query {sql} is not protected by a has_cap")
