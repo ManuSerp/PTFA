@@ -9,13 +9,21 @@ class CFGA:
         self.OUT = []
         self.nodeset = None
 
+    def reset(self):
+        self.cfg = None
+        self.IN = []
+        self.OUT = []
+        self.nodeset = None
+
     def poss(IN, OUT, node, parent):
         return IN[node] or OUT[parent]
 
     def definit(IN, OUT, node, parent):
+        IN[node] = True
         return IN[node] and OUT[parent]
 
     def ptfa(self, cfg: CFG, func_comp, pattern_set=["Pattern"]):
+        self.reset()
         t1 = time.time()
         # init
         self.cfg = cfg
@@ -47,6 +55,76 @@ class CFGA:
         t2 = time.time()-t1
         return result, t2
 
+    def poss_ptfa_efficient(self, cfg: CFG, pattern_set=["Pattern"]):
+        t1 = time.time()
+        self.reset()
+        # init
+        self.cfg = cfg
+        nodeid = self.cfg.get_node_ids()
+        self.IN = [False] * len(nodeid)
+        self.OUT = [False] * len(nodeid)
+        self.nodeset = nodeid
+        visited = []
+        worklist = []
+        visited.append(self.nodeset[0])
+        worklist.append(self.nodeset[0])
+        # loop
+        while len(worklist) > 0:
+            node = worklist.pop(0)
+
+            self.OUT[node] = (self.cfg.get_type(
+                node) in pattern_set) or self.IN[node]
+            for child in self.cfg.get_any_children(node):
+                propagate_flag = (
+                    (self.OUT[node] > self.IN[child]) or (not child in visited))
+                if propagate_flag:
+                    self.IN[child] = self.OUT[node]
+                    if not child in visited:
+                        visited.append(child)
+                        worklist.append(child)
+
+        result = []
+        for i in range(len(self.nodeset)):
+            if self.OUT[i]:
+                result.append(self.nodeset[i])
+        t2 = time.time()-t1
+        return result, t2
+
+    def def_ptfa_efficient(self, cfg: CFG, pattern_set=["Pattern"]):
+        t1 = time.time()
+        self.reset()
+        # init
+        self.cfg = cfg
+        nodeid = self.cfg.get_node_ids()
+        self.IN = [True] * len(nodeid)
+        self.OUT = [True] * len(nodeid)
+        self.nodeset = nodeid
+        visited = []
+        worklist = []
+        self.IN[0] = False
+        visited.append(self.nodeset[0])
+        worklist.append(self.nodeset[0])
+        # loop
+        while len(worklist) > 0:
+            node = worklist.pop(0)
+
+            self.OUT[node] = (self.cfg.get_type(
+                node) in pattern_set) or self.IN[node]
+            for child in self.cfg.get_any_children(node):
+                propagate_flag = (
+                    (self.OUT[node] < self.IN[child]) or (not child in visited))
+                if propagate_flag:
+                    self.IN[child] = self.OUT[node]
+                    visited.append(child)
+                    worklist.append(child)
+
+        result = []
+        for i in range(len(self.nodeset)):
+            if self.OUT[i] and i in visited:
+                result.append(self.nodeset[i])
+        t2 = time.time()-t1
+        return result, t2
+
 
 if __name__ == '__main__':
 
@@ -54,4 +132,5 @@ if __name__ == '__main__':
 
     cfg = cfgreader.read_cfg("../tp/perf/graph1.cfg.json")
     cfga = CFGA()
-    print(cfga.ptfa(cfg, CFGA.poss))
+    print(cfga.ptfa(cfg, CFGA.definit))
+    print(cfga.def_ptfa_efficient(cfg))
