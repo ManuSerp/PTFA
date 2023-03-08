@@ -240,9 +240,9 @@ if __name__ == '__main__':
 
     reachable = cfga.def_ptfa_efficient_reachable(cfg, pattern)
 
-    for open in fopens:
-        if open not in reachable:
-            print(f"fopen {open} is not reachable by a fclose")
+    for fopen in fopens:
+        if fopen not in reachable:
+            print(f"fopen {fopen} is not reachable by a fclose")
 
 
 # mysql
@@ -260,8 +260,23 @@ if __name__ == '__main__':
 
     print(mysql)
     reaching = cfga.def_ptfa_efficient_reaching(cfg, pattern)
-
+    line_to_protect = []
     for sql in mysql:
         if sql not in reaching:
             print(
                 f"sql query {cfg.get_position(sql)} is not protected by a has_cap")
+            if cfg.get_position(sql):
+                line_to_protect.append(cfg.get_position(sql)[0])
+
+    print(line_to_protect)
+
+    f = open("./code_protected.php", "w+")
+    g = open("../tp/part_2/wp-db.php", "r")
+    lines = g.readlines()
+    for i, line in enumerate(lines):
+        if i+1 in line_to_protect:
+            f.write("if ( has_cap( 'use_db' ) )\n"+line)
+        else:
+            f.write(line)
+
+    f.close()
