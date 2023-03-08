@@ -223,19 +223,19 @@ if __name__ == '__main__':
 
     cfg = cfgreader.read_cfg("../tp/perf/graph1.cfg.json")
     cfga = CFGA()
-    print("Temps graph 1 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 100 patterns")
+    print("Temps graph 1 :"+str(cfga.ptfa_reaching(cfg, CFGA.poss)[1])+" pour 100 patterns")
 
     cfg = cfgreader.read_cfg("../tp/perf/graph2.cfg.json")
     cfga = CFGA()
-    print("Temps graph 2 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 1000 patterns")
+    print("Temps graph 2 :"+str(cfga.ptfa_reaching(cfg, CFGA.poss)[1])+" pour 1000 patterns")
 
     cfg = cfgreader.read_cfg("../tp/perf/graph3.cfg.json")
     cfga = CFGA()
-    print("Temps graph 3 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 10000 patterns")
+    print("Temps graph 3 :"+str(cfga.ptfa_reaching(cfg, CFGA.poss)[1])+" pour 10000 patterns")
 
     cfg = cfgreader.read_cfg("../tp/perf/graph4.cfg.json")
     cfga = CFGA()
-    print("Temps graph 4 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 100000 patterns")
+    print("Temps graph 4 :"+str(cfga.ptfa_reaching(cfg, CFGA.poss)[1])+" pour 100000 patterns")
     
   
 
