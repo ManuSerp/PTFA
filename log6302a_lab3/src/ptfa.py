@@ -223,8 +223,21 @@ if __name__ == '__main__':
 
     cfg = cfgreader.read_cfg("../tp/perf/graph1.cfg.json")
     cfga = CFGA()
-    #print(cfga.ptfa_reaching(cfg, CFGA.definit))
-    print(cfga.def_ptfa_efficient_reachable(cfg, ["Pattern"]))
+    print("Temps graph 1 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 100 patterns")
+
+    cfg = cfgreader.read_cfg("../tp/perf/graph2.cfg.json")
+    cfga = CFGA()
+    print("Temps graph 2 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 1000 patterns")
+
+    cfg = cfgreader.read_cfg("../tp/perf/graph3.cfg.json")
+    cfga = CFGA()
+    print("Temps graph 3 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 10000 patterns")
+
+    cfg = cfgreader.read_cfg("../tp/perf/graph4.cfg.json")
+    cfga = CFGA()
+    print("Temps graph 4 :"+str(cfga.ptfa(cfg, CFGA.poss)[1])+" pour 100000 patterns")
+    
+  
 
     # fopenfclose
     cfg = cfgreader.read_cfg("../tp/part_1/file1.php.cfg.json")
@@ -280,3 +293,4 @@ if __name__ == '__main__':
             f.write(line)
 
     f.close()
+
